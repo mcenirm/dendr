@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
-	fmt.Println("Hello")
+	fmt.Println("TODO:")
+	fmt.Println(" * Open old database")
+	fmt.Println(" * Open new database")
+	fmt.Println(" * Scan tree")
 }

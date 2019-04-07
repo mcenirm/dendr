@@ -5,10 +5,17 @@ import (
 )
 
 func TestCreateInspectorWhenOlddbIsNil(t *testing.T) {
-	t.Errorf("test not implemented")
+	_, err := CreateInspector(nil, true, true)
+	if err != nil {
+		t.Errorf("CreateInpector had an error: %s", err)
+	}
 }
 
 func TestCreateInspectorWhenNewdbIsNil(t *testing.T) {
+	t.Errorf("test not implemented")
+}
+
+func TestCreateInspectorWhenCollectorIsNil(t *testing.T) {
 	t.Errorf("test not implemented")
 }
 

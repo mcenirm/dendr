@@ -8,10 +8,22 @@ import (
 )
 
 type DB interface{}
-type Collector interface{}
+
+type Change int
+
+const (
+	Unchanged Change = iota
+	Added
+)
+
+type Collector interface {
+	Collect(change Change, path string, info os.FileInfo) error
+}
 
 func CreateInspector(db DB, collector Collector) (inspector filepath.WalkFunc, err error) {
-	return nil, errors.New("not implemented")
+	return func(path string, info os.FileInfo, err error) error {
+		return errors.New("not implemented")
+	}, nil
 }
 
 func main() {

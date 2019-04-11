@@ -23,6 +23,7 @@ type ChangedStats int
 
 const (
 	ChangedModTime ChangedStats = 1 << iota
+	ChangedSize
 )
 
 type Collector interface {

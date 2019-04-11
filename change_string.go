@@ -28,11 +28,12 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[ChangedModTime-1]
+	_ = x[ChangedSize-2]
 }
 
-const _ChangedStats_name = "ChangedModTime"
+const _ChangedStats_name = "ChangedModTimeChangedSize"
 
-var _ChangedStats_index = [...]uint8{0, 14}
+var _ChangedStats_index = [...]uint8{0, 14, 25}
 
 func (i ChangedStats) String() string {
 	i -= 1

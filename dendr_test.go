@@ -77,6 +77,10 @@ func testInspector(t *testing.T, change Change, changedStats ChangedStats) {
 				earlier := db.before.modTime.Add(time.Duration(-7000000000))
 				db.before.modTime = earlier
 			}
+			if changedStats&ChangedSize != 0 {
+				larger := db.before.size + 100
+				db.before.size = larger
+			}
 		}
 	}
 
@@ -113,11 +117,11 @@ func TestInspectorWithFileWithDifferentModificationTime(t *testing.T) {
 }
 
 func TestInspectorWithFileWithDifferentSize(t *testing.T) {
-	t.Errorf("test not implemented")
+	testInspector(t, StatsChanged, ChangedSize)
 }
 
 func TestInspectorWithFileWithDifferentModificationTimeAndSize(t *testing.T) {
-	t.Errorf("test not implemented")
+	testInspector(t, StatsChanged, ChangedModTime|ChangedSize)
 }
 
 func TestInspectorWithDirectory(t *testing.T) {

@@ -7,48 +7,48 @@ import (
 	"path/filepath"
 )
 
-type DB interface{}
+type fileDatabase interface{}
 
-//go:generate stringer -type=Change,ChangedStats
+//go:generate stringer -type=change,changedStats
 
-type Change int
-
-const (
-	_ Change = iota
-	Unchanged
-	Added
-	StatsChanged
-)
-
-type ChangedStats int
+type change int
 
 const (
-	ChangedModTime ChangedStats = 1 << iota
-	ChangedSize
+	_ change = iota
+	unchanged
+	added
+	statsChanged
 )
 
-type Collector interface {
-	Collect(change Change, changedStats ChangedStats, path string, info os.FileInfo) error
+type changedStats int
+
+const (
+	changedModTime changedStats = 1 << iota
+	changedSize
+)
+
+type collector interface {
+	collect(theChange change, theChangedStats changedStats, path string, info os.FileInfo) error
 }
 
-func CreateInspector(db DB, collector Collector) (inspector filepath.WalkFunc, err error) {
-	if db == nil {
-		return nil, errors.New("db must not be nil")
+func createInspector(theDB fileDatabase, theCollector collector) (inspector filepath.WalkFunc, err error) {
+	if theDB == nil {
+		return nil, errors.New("theDB must not be nil")
 	}
-	if collector == nil {
-		return nil, errors.New("collector must not be nil")
+	if theCollector == nil {
+		return nil, errors.New("theCollector must not be nil")
 	}
 	return func(path string, info os.FileInfo, err error) error {
-		fmt.Println("collector pre:  ", collector)
-		collector.Collect(Unchanged, 0, path, info)
-		fmt.Println("collector post: ", collector)
+		fmt.Println("theCollector pre:  ", theCollector)
+		theCollector.collect(unchanged, 0, path, info)
+		fmt.Println("theCollector post: ", theCollector)
 		return nil
 	}, nil
 }
 
 func main() {
 	fmt.Println("TODO:")
-	fmt.Println(" * Open database")
+	fmt.Println(" * Open fileDatabase")
 	fmt.Println(" * Scan tree and report changes")
 	fmt.Println()
 

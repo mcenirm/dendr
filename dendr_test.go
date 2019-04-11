@@ -25,106 +25,106 @@ func (info fakeFileInfo) ModTime() time.Time { return info.modTime }
 func (info fakeFileInfo) IsDir() bool        { return false }
 func (info fakeFileInfo) Sys() interface{}   { return nil }
 
-type FakeDB struct {
+type fakeDB struct {
 	before fakeFileInfo
 }
 
-type FakeCollector struct {
-	change       Change
-	changedStats ChangedStats
+type fakeCollector struct {
+	change       change
+	changedStats changedStats
 	path_        string
 	info         os.FileInfo
 }
 
-func (c FakeCollector) Collect(change Change, changedStats ChangedStats, path string, info os.FileInfo) error {
+func (c fakeCollector) collect(theChange change, theChangedStats changedStats, path string, info os.FileInfo) error {
 	fmt.Println("        c pre:  ", c)
-	c.change = change
-	c.changedStats = changedStats
+	c.change = theChange
+	c.changedStats = theChangedStats
 	c.path_ = path
 	c.info = info
 	fmt.Println("        c post: ", c)
 	return nil
 }
 
-func makeFakes(t *testing.T) (FakeDB, FakeCollector, filepath.WalkFunc) {
-	db := FakeDB{}
-	collector := FakeCollector{}
-	inspector, err := CreateInspector(db, collector)
+func makeFakes(t *testing.T) (fakeDB, fakeCollector, filepath.WalkFunc) {
+	theDB := fakeDB{}
+	theCollector := fakeCollector{}
+	theInspector, err := createInspector(theDB, theCollector)
 	if err != nil {
-		t.Errorf("unexpected error from CreateInspector: %v", err)
+		t.Errorf("unexpected error from createInspector: %v", err)
 	}
-	return db, collector, inspector
+	return theDB, theCollector, theInspector
 }
 
-func callInspector(t *testing.T, inspector filepath.WalkFunc, f fakeFileInfo) {
-	err := inspector(testpath, f, nil)
+func callInspector(t *testing.T, theInspector filepath.WalkFunc, f fakeFileInfo) {
+	err := theInspector(testpath, f, nil)
 	if err != nil {
 		t.Errorf("unexpected error from inspector: %v", err)
 	}
 }
 
-func checkCollector(t *testing.T, collector FakeCollector, expected Change) {
-	if collector.change != expected {
-		t.Errorf("expected %v but got %v", expected, collector.change)
+func checkCollector(t *testing.T, theCollector fakeCollector, theExpectedChange change) {
+	if theCollector.change != theExpectedChange {
+		t.Errorf("expected %v but got %v", theExpectedChange, theCollector.change)
 	}
 }
 
-func testInspector(t *testing.T, change Change, changedStats ChangedStats) {
-	db, collector, inspector := makeFakes(t)
+func testInspector(t *testing.T, theChange change, theChangedStats changedStats) {
+	theDB, theCollector, theInspector := makeFakes(t)
 
 	after := fakeFileInfo{123, time.Now()}
-	if change != Added {
-		db.before = after
-		if change != Unchanged {
-			if changedStats&ChangedModTime != 0 {
-				earlier := db.before.modTime.Add(time.Duration(-7000000000))
-				db.before.modTime = earlier
+	if theChange != added {
+		theDB.before = after
+		if theChange != unchanged {
+			if theChangedStats&changedModTime != 0 {
+				earlier := theDB.before.modTime.Add(time.Duration(-7000000000))
+				theDB.before.modTime = earlier
 			}
-			if changedStats&ChangedSize != 0 {
-				larger := db.before.size + 100
-				db.before.size = larger
+			if theChangedStats&changedSize != 0 {
+				larger := theDB.before.size + 100
+				theDB.before.size = larger
 			}
 		}
 	}
 
-	callInspector(t, inspector, after)
-	checkCollector(t, collector, change)
+	callInspector(t, theInspector, after)
+	checkCollector(t, theCollector, theChange)
 }
 
 func TestCreateInspectorWhenDBIsNil(t *testing.T) {
-	collector := FakeCollector{}
-	_, err := CreateInspector(nil, collector)
+	theCollector := fakeCollector{}
+	_, err := createInspector(nil, theCollector)
 	if err == nil {
 		t.Errorf("expected error from CreateInpector")
 	}
 }
 
 func TestCreateInspectorWhenCollectorIsNil(t *testing.T) {
-	db := FakeDB{}
-	_, err := CreateInspector(db, nil)
+	theDB := fakeDB{}
+	_, err := createInspector(theDB, nil)
 	if err == nil {
 		t.Errorf("expected error from CreateInpector: %v", err)
 	}
 }
 
 func TestInspectorWithUnchangedFile(t *testing.T) {
-	testInspector(t, Unchanged, 0)
+	testInspector(t, unchanged, 0)
 }
 
 func TestInspectorWithAddedFile(t *testing.T) {
-	testInspector(t, Added, 0)
+	testInspector(t, added, 0)
 }
 
 func TestInspectorWithFileWithDifferentModificationTime(t *testing.T) {
-	testInspector(t, StatsChanged, ChangedModTime)
+	testInspector(t, statsChanged, changedModTime)
 }
 
 func TestInspectorWithFileWithDifferentSize(t *testing.T) {
-	testInspector(t, StatsChanged, ChangedSize)
+	testInspector(t, statsChanged, changedSize)
 }
 
 func TestInspectorWithFileWithDifferentModificationTimeAndSize(t *testing.T) {
-	testInspector(t, StatsChanged, ChangedModTime|ChangedSize)
+	testInspector(t, statsChanged, changedModTime|changedSize)
 }
 
 func TestInspectorWithDirectory(t *testing.T) {

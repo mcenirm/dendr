@@ -9,15 +9,24 @@ import (
 
 type DB interface{}
 
+//go:generate stringer -type=Change,ChangedStats
+
 type Change int
 
 const (
 	Unchanged Change = iota
 	Added
+	StatsChanged
+)
+
+type ChangedStats int
+
+const (
+	ChangedModTime ChangedStats = 1 << iota
 )
 
 type Collector interface {
-	Collect(change Change, path string, info os.FileInfo) error
+	Collect(change Change, changedStats ChangedStats, path string, info os.FileInfo) error
 }
 
 func CreateInspector(db DB, collector Collector) (inspector filepath.WalkFunc, err error) {

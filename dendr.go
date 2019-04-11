@@ -31,6 +31,12 @@ type Collector interface {
 }
 
 func CreateInspector(db DB, collector Collector) (inspector filepath.WalkFunc, err error) {
+	if db == nil {
+		return nil, errors.New("db must not be nil")
+	}
+	if collector == nil {
+		return nil, errors.New("collector must not be nil")
+	}
 	return func(path string, info os.FileInfo, err error) error {
 		return errors.New("not implemented")
 	}, nil

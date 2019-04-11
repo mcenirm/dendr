@@ -14,7 +14,8 @@ type DB interface{}
 type Change int
 
 const (
-	Unchanged Change = iota
+	_ Change = iota
+	Unchanged
 	Added
 	StatsChanged
 )
@@ -38,7 +39,10 @@ func CreateInspector(db DB, collector Collector) (inspector filepath.WalkFunc, e
 		return nil, errors.New("collector must not be nil")
 	}
 	return func(path string, info os.FileInfo, err error) error {
-		return errors.New("not implemented")
+		fmt.Println("collector pre:  ", collector)
+		collector.Collect(Unchanged, 0, path, info)
+		fmt.Println("collector post: ", collector)
+		return nil
 	}, nil
 }
 

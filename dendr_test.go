@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,10 +37,12 @@ type FakeCollector struct {
 }
 
 func (c FakeCollector) Collect(change Change, changedStats ChangedStats, path string, info os.FileInfo) error {
+	fmt.Println("        c pre:  ", c)
 	c.change = change
 	c.changedStats = changedStats
 	c.path_ = path
 	c.info = info
+	fmt.Println("        c post: ", c)
 	return nil
 }
 

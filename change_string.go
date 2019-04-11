@@ -8,9 +8,9 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[Unchanged-0]
-	_ = x[Added-1]
-	_ = x[StatsChanged-2]
+	_ = x[Unchanged-1]
+	_ = x[Added-2]
+	_ = x[StatsChanged-3]
 }
 
 const _Change_name = "UnchangedAddedStatsChanged"
@@ -18,8 +18,9 @@ const _Change_name = "UnchangedAddedStatsChanged"
 var _Change_index = [...]uint8{0, 9, 14, 26}
 
 func (i Change) String() string {
+	i -= 1
 	if i < 0 || i >= Change(len(_Change_index)-1) {
-		return "Change(" + strconv.FormatInt(int64(i), 10) + ")"
+		return "Change(" + strconv.FormatInt(int64(i+1), 10) + ")"
 	}
 	return _Change_name[_Change_index[i]:_Change_index[i+1]]
 }

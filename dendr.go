@@ -2,63 +2,69 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-type fileStats struct {
+type fileEntry struct {
+	path  string
 	size  int64
 	mtime time.Time
 }
 
-func openFileDatabase(fileName string) (*fileDatabase, error) {
-	fdb := &fileDatabase{}
-
-	return fdb, nil
+type inventoryReader struct {
+	f *os.File
+	e error
 }
 
-type fileDatabase struct {
+func newFileListReader(fileName string) *inventoryReader {
+	f, err := os.Open(fileName)
+	return &inventoryReader{f, err}
 }
 
-func (fdb *fileDatabase) Close() error {
-	return nil
+func (r *inventoryReader) Close() error {
+	return r.f.Close()
 }
 
-func (fdb *fileDatabase) get(path string) (fileStats, bool, error) {
-	return fileStats{}, false, nil
+func inventoryFileNameFor(name string) string {
+	return name + ".inventory"
 }
 
-func (fdb *fileDatabase) set(path string, stats fileStats) error {
+func (fe *fileEntry) comparePath(path string) int {
+	if fe == nil {
+		return -1
+	}
+	return strings.Compare(fe.path, path)
+}
+
+func (r *inventoryReader) readEntry() *fileEntry {
 	return nil
 }
 
 func main() {
-	fdb, err := openFileDatabase("test.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	var err error
 
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Printf("error getcwd: %v\n", err)
-		return
-	}
+	start := "testpath"
 
-	err = filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
+	pastName := "past"
+	pastInventoryFileName := inventoryFileNameFor(pastName)
+	pastInventoryReader := newFileListReader(pastInventoryFileName)
+
+	past := pastInventoryReader.readEntry()
+	err = filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			// ignore errors (TODO unless verbose)
 			return nil
 		}
-		newStats := fileStats{info.Size(), info.ModTime()}
-		oldStats, ok, err := fdb.get(path)
-		if err != nil {
-			return err
-		}
-		if ok {
-			sameSize := oldStats.size == newStats.size
-			sameMtime := oldStats.mtime.Equal(newStats.mtime)
+		size := info.Size()
+		mtime := info.ModTime()
+		cmp := past.comparePath(path)
+		switch {
+		case cmp == 0:
+			sameSize := past.size == size
+			sameMtime := past.mtime.Equal(mtime)
 			if sameSize && sameMtime {
 				// do nothing?
 			} else {
@@ -75,13 +81,12 @@ func main() {
 				}
 				fmt.Println("  ", path)
 			}
-		} else {
-			fmt.Println("+sm  ", path)
+		case cmp < 0:
+			fmt.Println("compare", cmp, past, path)
+		case cmp > 0:
+			fmt.Println("compare", cmp, past, path)
 		}
-		err = fdb.set(path, newStats)
-		if err != nil {
-			return err
-		}
+
 		return nil
 	})
 	if err != nil {

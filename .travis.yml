@@ -1,1 +1,18 @@
 language: go
+before_install:
+  - go get github.com/mitchellh/gox
+script:
+  - gox -output="build/{{.Dir}}-$TRAVIS_TAG-{{.OS}}-{{.Arch}}"
+  - mkdir dist && cd build
+  - 'slug=${TRAVIS_REPO_SLUG#*/}; for i in *.exe; do cp $i "$slug".exe; zip ../dist/$(echo $i | sed -e "s/.exe//g").zip "$slug".exe; rm "$slug".exe; done'
+  - 'slug=${TRAVIS_REPO_SLUG#*/}; for i in $(ls "$slug"-* | grep -v exe); do cp $i "$slug"; tar -zcvf ../dist/$i.tar.gz "$slug"; rm "$slug"; done'
+  - cd ../
+  - ls -la dist/*
+deploy:
+  provider: releases
+  api-key: "$GITHUB_TOKEN"
+  file_glob: true
+  file: dist/*
+  skip_cleanup: true
+  on:
+    tags: true

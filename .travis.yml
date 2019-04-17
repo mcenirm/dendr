@@ -4,7 +4,6 @@ before_deploy:
 - gox -osarch="linux/amd64 darwin/amd64" -output="build/{{.Dir}}-$TRAVIS_TAG-{{.OS}}-{{.Arch}}"
 - mkdir dist && cd build
 - export slug=${TRAVIS_REPO_SLUG#*/}
-- for i in *.exe; do cp $i "$slug".exe; zip ../dist/$(echo $i | sed -e "s/.exe//g").zip "$slug".exe; rm "$slug".exe; done
 - for i in $(ls "$slug"-* | grep -v exe); do cp $i "$slug"; tar -zcvf ../dist/$i.tar.gz "$slug"; rm "$slug"; done
 - cd ../
 - ls -la dist/*

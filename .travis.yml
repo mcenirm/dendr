@@ -1,12 +1,13 @@
 language: go
 before_deploy:
-  - go get github.com/mitchellh/gox
-  - gox -output="build/{{.Dir}}-$TRAVIS_TAG-{{.OS}}-{{.Arch}}"
-  - mkdir dist && cd build
-  - 'slug=${TRAVIS_REPO_SLUG#*/}; for i in *.exe; do cp $i "$slug".exe; zip ../dist/$(echo $i | sed -e "s/.exe//g").zip "$slug".exe; rm "$slug".exe; done'
-  - 'slug=${TRAVIS_REPO_SLUG#*/}; for i in $(ls "$slug"-* | grep -v exe); do cp $i "$slug"; tar -zcvf ../dist/$i.tar.gz "$slug"; rm "$slug"; done'
-  - cd ../
-  - ls -la dist/*
+- go get github.com/mitchellh/gox
+- gox -osarch="linux/amd64 darwin/amd64" -output="build/{{.Dir}}-$TRAVIS_TAG-{{.OS}}-{{.Arch}}"
+- mkdir dist && cd build
+- export slug=${TRAVIS_REPO_SLUG#*/}
+- for i in *.exe; do cp $i "$slug".exe; zip ../dist/$(echo $i | sed -e "s/.exe//g").zip "$slug".exe; rm "$slug".exe; done
+- for i in $(ls "$slug"-* | grep -v exe); do cp $i "$slug"; tar -zcvf ../dist/$i.tar.gz "$slug"; rm "$slug"; done
+- cd ../
+- ls -la dist/*
 deploy:
   provider: releases
   api_key: "$GITHUB_TOKEN"

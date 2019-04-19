@@ -72,9 +72,9 @@ func (r *inventoryReader) readEntry() *fileEntry {
 		fields := strings.Split(t, inventoryFieldSep)
 		path, _ := url.PathUnescape(fields[0])
 		entry := fileEntry{path: path}
-		for i := range fields[1:] {
-			marker := fields[i][0]
-			value := fields[i][1:]
+		for _, field := range fields[1:] {
+			marker := field[0]
+			value := field[1:]
 			switch marker {
 			case inventoryMarkerSize:
 				entry.size, _ = strconv.ParseInt(value, 10, 64)

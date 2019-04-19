@@ -129,31 +129,40 @@ func main() {
 		}
 
 		next := &fileEntry{path, info.Size(), info.ModTime().UTC()}
-		cmp := past.comparePath(path)
-		switch {
-		case cmp == 0:
-			sameSize := past.size == next.size
-			sameMtime := past.mtime.Equal(next.mtime)
-			if sameSize && sameMtime {
-				// do nothing?
-			} else {
-				fmt.Print("=")
-				if sameSize {
-					fmt.Print(".")
-				} else {
-					fmt.Print("s")
+		if past == nil {
+			fmt.Println("+++  ", path)
+		} else {
+		pastloop:
+			for keepgoing := true; keepgoing && past != nil; past = pastInventoryReader.readEntry() {
+				cmp := past.comparePath(path)
+				switch {
+				case cmp < 0:
+					fmt.Println("---  ", past.path)
+				case cmp == 0:
+					sameSize := past.size == next.size
+					sameMtime := past.mtime.Equal(next.mtime)
+					if sameSize && sameMtime {
+						// do nothing?
+					} else {
+						fmt.Print("=")
+						if sameSize {
+							fmt.Print(".")
+						} else {
+							fmt.Print("s")
+						}
+						if sameMtime {
+							fmt.Print(".")
+						} else {
+							fmt.Print("m")
+						}
+						fmt.Println("  ", path)
+					}
+					keepgoing = false
+				default:
+					fmt.Println("+++  ", path)
+					break pastloop
 				}
-				if sameMtime {
-					fmt.Print(".")
-				} else {
-					fmt.Print("m")
-				}
-				fmt.Println("  ", path)
 			}
-		case cmp < 0:
-			fmt.Println("compare", cmp, past, path)
-		case cmp > 0:
-			fmt.Println("compare", cmp, past, path)
 		}
 
 		nextInventoryWriter.writeEntry(next)
@@ -163,5 +172,8 @@ func main() {
 	if err != nil {
 		fmt.Printf("error walking: %v\n", err)
 		return
+	}
+	for ; past != nil; past = pastInventoryReader.readEntry() {
+		fmt.Println("---  ", past.path)
 	}
 }

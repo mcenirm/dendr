@@ -123,8 +123,8 @@ func main() {
 			return nil
 		}
 
-		if info.IsDir() {
-			// ignore directories (TODO unless extra verbose?)
+		if !info.Mode().IsRegular() {
+			// ignore directories, symlinks, etc (TODO unless extra verbose?)
 			return nil
 		}
 

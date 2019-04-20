@@ -94,7 +94,7 @@ func (w *inventoryWriter) writeEntry(fe *fileEntry) {
 	fmt.Fprintf(w.f, inventoryFormat, path, fe.size, mtime)
 }
 
-func main() {
+func realmain() {
 	var err error
 
 	start := "testpath"
@@ -176,4 +176,8 @@ func main() {
 	for ; past != nil; past = pastInventoryReader.readEntry() {
 		fmt.Println("---  ", past.path)
 	}
+}
+
+func main() {
+	realmain()
 }

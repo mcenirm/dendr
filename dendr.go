@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -94,26 +95,27 @@ func (w *inventoryWriter) writeEntry(fe *fileEntry) {
 	fmt.Fprintf(w.f, inventoryFormat, path, fe.size, mtime)
 }
 
-func main() {
+func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
 	var err error
 
-	start := "testpath"
-
-	pastName := "past"
 	pastInventoryFileName := inventoryFileNameFor(pastName)
 	pastInventoryReader := newInventoryReader(pastInventoryFileName)
 	defer pastInventoryReader.Close()
 
 	if e := pastInventoryReader.e; e != nil {
-		fmt.Println(e)
+		if !quiet {
+			fmt.Println(e)
+		}
 	}
 
-	nextName := "next"
 	nextInventoryFileName := inventoryFileNameFor(nextName)
 	nextInventoryWriter := newInventoryWriter(nextInventoryFileName)
+	defer nextInventoryWriter.Close()
 
 	if e := nextInventoryWriter.e; e != nil {
-		fmt.Println(e)
+		if !quiet {
+			fmt.Println(e)
+		}
 	}
 
 	past := pastInventoryReader.readEntry()
@@ -130,36 +132,44 @@ func main() {
 
 		next := &fileEntry{path, info.Size(), info.ModTime().UTC()}
 		if past == nil {
-			fmt.Println("+++  ", path)
+			if !quiet {
+				fmt.Println("+++  ", path)
+			}
 		} else {
 		pastloop:
 			for keepgoing := true; keepgoing && past != nil; past = pastInventoryReader.readEntry() {
 				cmp := past.comparePath(path)
 				switch {
 				case cmp < 0:
-					fmt.Println("---  ", past.path)
+					if !quiet {
+						fmt.Println("---  ", past.path)
+					}
 				case cmp == 0:
 					sameSize := past.size == next.size
 					sameMtime := past.mtime.Equal(next.mtime)
 					if sameSize && sameMtime {
 						// do nothing?
 					} else {
-						fmt.Print("=")
-						if sameSize {
-							fmt.Print(".")
-						} else {
-							fmt.Print("s")
+						if !quiet {
+							fmt.Print("=")
+							if sameSize {
+								fmt.Print(".")
+							} else {
+								fmt.Print("s")
+							}
+							if sameMtime {
+								fmt.Print(".")
+							} else {
+								fmt.Print("m")
+							}
+							fmt.Println("  ", path)
 						}
-						if sameMtime {
-							fmt.Print(".")
-						} else {
-							fmt.Print("m")
-						}
-						fmt.Println("  ", path)
 					}
 					keepgoing = false
 				default:
-					fmt.Println("+++  ", path)
+					if !quiet {
+						fmt.Println("+++  ", path)
+					}
 					break pastloop
 				}
 			}
@@ -170,10 +180,31 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("error walking: %v\n", err)
+		if !quiet {
+			fmt.Printf("error walking: %v\n", err)
+		}
 		return
 	}
 	for ; past != nil; past = pastInventoryReader.readEntry() {
-		fmt.Println("---  ", past.path)
+		if !quiet {
+			fmt.Println("---  ", past.path)
+		}
 	}
+}
+
+func main() {
+	var (
+		flagpath     string
+		flagpastname string
+		flagnextname string
+		flagquiet    bool
+		flagverbose  bool
+	)
+	flag.StringVar(&flagpath, "path", "testpath", "path to scan")
+	flag.StringVar(&flagpastname, "pastname", "past", "name of past inventory")
+	flag.StringVar(&flagnextname, "nextname", "next", "name of next inventory")
+	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
+	flag.BoolVar(&flagverbose, "verbose", false, "show more details")
+	flag.Parse()
+	realmain(flagpath, flagpastname, flagnextname, flagquiet, flagverbose)
 }

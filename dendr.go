@@ -127,6 +127,51 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 	walkAndReport(start, pastInventoryReader, nextInventoryWriter, quiet)
 }
 
+func reportNewFile(quiet bool, path string) {
+	if !quiet {
+		fmt.Println("+++  ", path)
+	}
+}
+
+func reportRemovedFile(quiet bool, path string) {
+	if !quiet {
+		fmt.Println("---  ", path)
+	}
+}
+
+func reportUnchangedFile(quiet bool, path string) {
+	// do nothing?
+}
+
+func reportChangedFile(quiet bool, past *fileEntry, next *fileEntry) {
+	sameSize := past.size == next.size
+	sameMtime := past.mtime.Equal(next.mtime)
+	if sameSize && sameMtime {
+		reportUnchangedFile(quiet, next.path)
+	} else {
+		if !quiet {
+			fmt.Print("=")
+			if sameSize {
+				fmt.Print(".")
+			} else {
+				fmt.Print("s")
+			}
+			if sameMtime {
+				fmt.Print(".")
+			} else {
+				fmt.Print("m")
+			}
+			fmt.Println("  ", next.path)
+		}
+	}
+}
+
+func reportWalkingError(quiet bool, err error) {
+	if !quiet {
+		fmt.Printf("error walking: %v\n", err)
+	}
+}
+
 func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInventoryWriter *inventoryWriter, quiet bool) {
 	var err error
 
@@ -144,44 +189,19 @@ func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInven
 
 		next := &fileEntry{path, info.Size(), info.ModTime().UTC()}
 		if past == nil {
-			if !quiet {
-				fmt.Println("+++  ", path)
-			}
+			reportNewFile(quiet, path)
 		} else {
 		pastloop:
 			for keepgoing := true; keepgoing && past != nil; past = pastInventoryReader.readEntry() {
 				cmp := past.comparePath(path)
 				switch {
 				case cmp < 0:
-					if !quiet {
-						fmt.Println("---  ", past.path)
-					}
+					reportRemovedFile(quiet, path)
 				case cmp == 0:
-					sameSize := past.size == next.size
-					sameMtime := past.mtime.Equal(next.mtime)
-					if sameSize && sameMtime {
-						// do nothing?
-					} else {
-						if !quiet {
-							fmt.Print("=")
-							if sameSize {
-								fmt.Print(".")
-							} else {
-								fmt.Print("s")
-							}
-							if sameMtime {
-								fmt.Print(".")
-							} else {
-								fmt.Print("m")
-							}
-							fmt.Println("  ", path)
-						}
-					}
+					reportChangedFile(quiet, past, next)
 					keepgoing = false
 				default:
-					if !quiet {
-						fmt.Println("+++  ", path)
-					}
+					reportNewFile(quiet, path)
 					break pastloop
 				}
 			}
@@ -192,15 +212,11 @@ func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInven
 		return nil
 	})
 	if err != nil {
-		if !quiet {
-			fmt.Printf("error walking: %v\n", err)
-		}
+		reportWalkingError(quiet, err)
 		return
 	}
 	for ; past != nil; past = pastInventoryReader.readEntry() {
-		if !quiet {
-			fmt.Println("---  ", past.path)
-		}
+		reportRemovedFile(quiet, past.path)
 	}
 }
 

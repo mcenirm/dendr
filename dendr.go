@@ -43,7 +43,14 @@ func newInventoryReader(fileName string) *inventoryReader {
 }
 
 func newInventoryWriter(fileName string) *inventoryWriter {
-	f, err := os.Create(fileName)
+	var f *os.File
+	var err error
+	if fileName == stdoutName {
+		f = os.Stdout
+		err = nil
+	} else {
+		f, err = os.Create(fileName)
+	}
 	return &inventoryWriter{f, err}
 }
 
@@ -113,7 +120,12 @@ func openPastInventoryReader(pastName string) *inventoryReader {
 }
 
 func openNextInventoryWriter(nextName string) *inventoryWriter {
-	nextInventoryFileName := inventoryFileNameFor(nextName)
+	var nextInventoryFileName string
+	if nextName == stdoutName {
+		nextInventoryFileName = stdoutName
+	} else {
+		nextInventoryFileName = inventoryFileNameFor(nextName)
+	}
 	return newInventoryWriter(nextInventoryFileName)
 }
 

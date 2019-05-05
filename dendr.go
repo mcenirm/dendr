@@ -30,7 +30,14 @@ type inventoryWriter struct {
 }
 
 func newInventoryReader(fileName string) *inventoryReader {
-	f, err := os.Open(fileName)
+	var f *os.File
+	var err error
+	if fileName == stdinName {
+		f = os.Stdin
+		err = nil
+	} else {
+		f, err = os.Open(fileName)
+	}
 	s := bufio.NewScanner(f)
 	return &inventoryReader{f, s, err}
 }
@@ -96,7 +103,12 @@ func (w *inventoryWriter) writeEntry(fe *fileEntry) {
 }
 
 func openPastInventoryReader(pastName string) *inventoryReader {
-	pastInventoryFileName := inventoryFileNameFor(pastName)
+	var pastInventoryFileName string
+	if pastName == stdinName {
+		pastInventoryFileName = stdinName
+	} else {
+		pastInventoryFileName = inventoryFileNameFor(pastName)
+	}
 	return newInventoryReader(pastInventoryFileName)
 }
 

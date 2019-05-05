@@ -30,13 +30,27 @@ type inventoryWriter struct {
 }
 
 func newInventoryReader(fileName string) *inventoryReader {
-	f, err := os.Open(fileName)
+	var f *os.File
+	var err error
+	if fileName == stdinName {
+		f = os.Stdin
+		err = nil
+	} else {
+		f, err = os.Open(fileName)
+	}
 	s := bufio.NewScanner(f)
 	return &inventoryReader{f, s, err}
 }
 
 func newInventoryWriter(fileName string) *inventoryWriter {
-	f, err := os.Create(fileName)
+	var f *os.File
+	var err error
+	if fileName == stdoutName {
+		f = os.Stdout
+		err = nil
+	} else {
+		f, err = os.Create(fileName)
+	}
 	return &inventoryWriter{f, err}
 }
 
@@ -95,11 +109,28 @@ func (w *inventoryWriter) writeEntry(fe *fileEntry) {
 	fmt.Fprintf(w.f, inventoryFormat, path, fe.size, mtime)
 }
 
-func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
-	var err error
+func openPastInventoryReader(pastName string) *inventoryReader {
+	var pastInventoryFileName string
+	if pastName == stdinName {
+		pastInventoryFileName = stdinName
+	} else {
+		pastInventoryFileName = inventoryFileNameFor(pastName)
+	}
+	return newInventoryReader(pastInventoryFileName)
+}
 
-	pastInventoryFileName := inventoryFileNameFor(pastName)
-	pastInventoryReader := newInventoryReader(pastInventoryFileName)
+func openNextInventoryWriter(nextName string) *inventoryWriter {
+	var nextInventoryFileName string
+	if nextName == stdoutName {
+		nextInventoryFileName = stdoutName
+	} else {
+		nextInventoryFileName = inventoryFileNameFor(nextName)
+	}
+	return newInventoryWriter(nextInventoryFileName)
+}
+
+func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
+	pastInventoryReader := openPastInventoryReader(pastName)
 	defer pastInventoryReader.Close()
 
 	if e := pastInventoryReader.e; e != nil {
@@ -108,8 +139,7 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 		}
 	}
 
-	nextInventoryFileName := inventoryFileNameFor(nextName)
-	nextInventoryWriter := newInventoryWriter(nextInventoryFileName)
+	nextInventoryWriter := openNextInventoryWriter(nextName)
 	defer nextInventoryWriter.Close()
 
 	if e := nextInventoryWriter.e; e != nil {
@@ -117,6 +147,57 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 			fmt.Println(e)
 		}
 	}
+
+	walkAndReport(start, pastInventoryReader, nextInventoryWriter, quiet)
+}
+
+func reportNewFile(quiet bool, path string) {
+	if !quiet {
+		fmt.Println("+++  ", path)
+	}
+}
+
+func reportRemovedFile(quiet bool, path string) {
+	if !quiet {
+		fmt.Println("---  ", path)
+	}
+}
+
+func reportUnchangedFile(quiet bool, path string) {
+	// do nothing?
+}
+
+func reportChangedFile(quiet bool, past *fileEntry, next *fileEntry) {
+	sameSize := past.size == next.size
+	sameMtime := past.mtime.Equal(next.mtime)
+	if sameSize && sameMtime {
+		reportUnchangedFile(quiet, next.path)
+	} else {
+		if !quiet {
+			fmt.Print("=")
+			if sameSize {
+				fmt.Print(".")
+			} else {
+				fmt.Print("s")
+			}
+			if sameMtime {
+				fmt.Print(".")
+			} else {
+				fmt.Print("m")
+			}
+			fmt.Println("  ", next.path)
+		}
+	}
+}
+
+func reportWalkingError(quiet bool, err error) {
+	if !quiet {
+		fmt.Printf("error walking: %v\n", err)
+	}
+}
+
+func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInventoryWriter *inventoryWriter, quiet bool) {
+	var err error
 
 	past := pastInventoryReader.readEntry()
 	err = filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
@@ -132,44 +213,19 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 
 		next := &fileEntry{path, info.Size(), info.ModTime().UTC()}
 		if past == nil {
-			if !quiet {
-				fmt.Println("+++  ", path)
-			}
+			reportNewFile(quiet, path)
 		} else {
 		pastloop:
 			for keepgoing := true; keepgoing && past != nil; past = pastInventoryReader.readEntry() {
 				cmp := past.comparePath(path)
 				switch {
 				case cmp < 0:
-					if !quiet {
-						fmt.Println("---  ", past.path)
-					}
+					reportRemovedFile(quiet, path)
 				case cmp == 0:
-					sameSize := past.size == next.size
-					sameMtime := past.mtime.Equal(next.mtime)
-					if sameSize && sameMtime {
-						// do nothing?
-					} else {
-						if !quiet {
-							fmt.Print("=")
-							if sameSize {
-								fmt.Print(".")
-							} else {
-								fmt.Print("s")
-							}
-							if sameMtime {
-								fmt.Print(".")
-							} else {
-								fmt.Print("m")
-							}
-							fmt.Println("  ", path)
-						}
-					}
+					reportChangedFile(quiet, past, next)
 					keepgoing = false
 				default:
-					if !quiet {
-						fmt.Println("+++  ", path)
-					}
+					reportNewFile(quiet, path)
 					break pastloop
 				}
 			}
@@ -180,17 +236,18 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 		return nil
 	})
 	if err != nil {
-		if !quiet {
-			fmt.Printf("error walking: %v\n", err)
-		}
+		reportWalkingError(quiet, err)
 		return
 	}
 	for ; past != nil; past = pastInventoryReader.readEntry() {
-		if !quiet {
-			fmt.Println("---  ", past.path)
-		}
+		reportRemovedFile(quiet, past.path)
 	}
 }
+
+const (
+	stdinName  = "-"
+	stdoutName = "-"
+)
 
 func main() {
 	var (
@@ -200,9 +257,9 @@ func main() {
 		flagquiet    bool
 		flagverbose  bool
 	)
-	flag.StringVar(&flagpath, "path", "testpath", "path to scan")
-	flag.StringVar(&flagpastname, "pastname", "past", "name of past inventory")
-	flag.StringVar(&flagnextname, "nextname", "next", "name of next inventory")
+	flag.StringVar(&flagpath, "path", ".", "path to scan")
+	flag.StringVar(&flagpastname, "pastname", stdinName, "past inventory file name")
+	flag.StringVar(&flagnextname, "nextname", stdoutName, "next inventory file name")
 	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
 	flag.BoolVar(&flagverbose, "verbose", false, "show more details")
 	flag.Parse()

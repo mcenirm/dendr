@@ -212,9 +212,9 @@ func main() {
 		flagquiet    bool
 		flagverbose  bool
 	)
-	flag.StringVar(&flagpath, "path", "testpath", "path to scan")
-	flag.StringVar(&flagpastname, "pastname", "past", "name of past inventory")
-	flag.StringVar(&flagnextname, "nextname", "next", "name of next inventory")
+	flag.StringVar(&flagpath, "path", ".", "path to scan")
+	flag.StringVar(&flagpastname, "pastname", "-", "past inventory file name")
+	flag.StringVar(&flagnextname, "nextname", "-", "next inventory file name")
 	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
 	flag.BoolVar(&flagverbose, "verbose", false, "show more details")
 	flag.Parse()

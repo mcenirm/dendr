@@ -135,7 +135,7 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 
 	if e := pastInventoryReader.e; e != nil {
 		if !quiet {
-			fmt.Println(e)
+			fmt.Fprintln(os.Stderr, e)
 		}
 	}
 
@@ -144,7 +144,7 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 
 	if e := nextInventoryWriter.e; e != nil {
 		if !quiet {
-			fmt.Println(e)
+			fmt.Fprintln(os.Stderr, e)
 		}
 	}
 
@@ -153,13 +153,13 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 
 func reportNewFile(quiet bool, path string) {
 	if !quiet {
-		fmt.Println("+++  ", path)
+		fmt.Fprintln(os.Stderr, "+++  ", path)
 	}
 }
 
 func reportRemovedFile(quiet bool, path string) {
 	if !quiet {
-		fmt.Println("---  ", path)
+		fmt.Fprintln(os.Stderr, "---  ", path)
 	}
 }
 
@@ -174,25 +174,25 @@ func reportChangedFile(quiet bool, past *fileEntry, next *fileEntry) {
 		reportUnchangedFile(quiet, next.path)
 	} else {
 		if !quiet {
-			fmt.Print("=")
+			fmt.Fprint(os.Stderr, "=")
 			if sameSize {
-				fmt.Print(".")
+				fmt.Fprint(os.Stderr, ".")
 			} else {
-				fmt.Print("s")
+				fmt.Fprint(os.Stderr, "s")
 			}
 			if sameMtime {
-				fmt.Print(".")
+				fmt.Fprint(os.Stderr, ".")
 			} else {
-				fmt.Print("m")
+				fmt.Fprint(os.Stderr, "m")
 			}
-			fmt.Println("  ", next.path)
+			fmt.Fprintln(os.Stderr, "  ", next.path)
 		}
 	}
 }
 
 func reportWalkingError(quiet bool, err error) {
 	if !quiet {
-		fmt.Printf("error walking: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error walking: %v\n", err)
 	}
 }
 

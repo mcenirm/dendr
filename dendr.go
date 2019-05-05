@@ -129,7 +129,7 @@ func openNextInventoryWriter(nextName string) *inventoryWriter {
 	return newInventoryWriter(nextInventoryFileName)
 }
 
-func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
+func realmain(start string, pastName string, nextName string, quiet bool) {
 	pastInventoryReader := openPastInventoryReader(pastName)
 	defer pastInventoryReader.Close()
 
@@ -255,13 +255,11 @@ func main() {
 		flagpastname string
 		flagnextname string
 		flagquiet    bool
-		flagverbose  bool
 	)
 	flag.StringVar(&flagpath, "path", ".", "path to scan")
 	flag.StringVar(&flagpastname, "pastname", stdinName, "past inventory file name")
 	flag.StringVar(&flagnextname, "nextname", stdoutName, "next inventory file name")
 	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
-	flag.BoolVar(&flagverbose, "verbose", false, "show more details")
 	flag.Parse()
-	realmain(flagpath, flagpastname, flagnextname, flagquiet, flagverbose)
+	realmain(flagpath, flagpastname, flagnextname, flagquiet)
 }

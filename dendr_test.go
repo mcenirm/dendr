@@ -24,25 +24,25 @@ func TestComparePath(t *testing.T) {
 }
 
 func TestOpenPastInventoryReaderStdin(t *testing.T) {
-	r := openPastInventoryReader("-")
+	r := openPastInventoryReader(stdinName)
 	defer r.Close()
 
 	if r.e != nil {
 		t.Error(r.e)
 	}
 	if r.f != os.Stdin {
-		t.Errorf("openPastInventoryReader(\"-\") should open stdin")
+		t.Errorf("openPastInventoryReader(\"%v\") should open stdin", stdinName)
 	}
 }
 
 func TestOpenNextInventoryWriterStdout(t *testing.T) {
-	r := openNextInventoryWriter("-")
+	r := openNextInventoryWriter(stdoutName)
 	defer r.Close()
 
 	if r.e != nil {
 		t.Error(r.e)
 	}
 	if r.f != os.Stdout {
-		t.Errorf("openNextInventoryWriter(\"-\") should open stdout")
+		t.Errorf("openNextInventoryWriter(\"%v\") should open stdout", stdoutName)
 	}
 }

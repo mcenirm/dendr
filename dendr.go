@@ -220,6 +220,11 @@ func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInven
 	}
 }
 
+const (
+	stdinName  = "-"
+	stdoutName = "-"
+)
+
 func main() {
 	var (
 		flagpath     string
@@ -229,8 +234,8 @@ func main() {
 		flagverbose  bool
 	)
 	flag.StringVar(&flagpath, "path", ".", "path to scan")
-	flag.StringVar(&flagpastname, "pastname", "-", "past inventory file name")
-	flag.StringVar(&flagnextname, "nextname", "-", "next inventory file name")
+	flag.StringVar(&flagpastname, "pastname", stdinName, "past inventory file name")
+	flag.StringVar(&flagnextname, "nextname", stdoutName, "next inventory file name")
 	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
 	flag.BoolVar(&flagverbose, "verbose", false, "show more details")
 	flag.Parse()

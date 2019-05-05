@@ -95,11 +95,20 @@ func (w *inventoryWriter) writeEntry(fe *fileEntry) {
 	fmt.Fprintf(w.f, inventoryFormat, path, fe.size, mtime)
 }
 
+func openPastInventoryReader(pastName string) *inventoryReader {
+	pastInventoryFileName := inventoryFileNameFor(pastName)
+	return newInventoryReader(pastInventoryFileName)
+}
+
+func openNextInventoryWriter(nextName string) *inventoryWriter {
+	nextInventoryFileName := inventoryFileNameFor(nextName)
+	return newInventoryWriter(nextInventoryFileName)
+}
+
 func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
 	var err error
 
-	pastInventoryFileName := inventoryFileNameFor(pastName)
-	pastInventoryReader := newInventoryReader(pastInventoryFileName)
+	pastInventoryReader := openPastInventoryReader(pastName)
 	defer pastInventoryReader.Close()
 
 	if e := pastInventoryReader.e; e != nil {
@@ -108,8 +117,7 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 		}
 	}
 
-	nextInventoryFileName := inventoryFileNameFor(nextName)
-	nextInventoryWriter := newInventoryWriter(nextInventoryFileName)
+	nextInventoryWriter := openNextInventoryWriter(nextName)
 	defer nextInventoryWriter.Close()
 
 	if e := nextInventoryWriter.e; e != nil {

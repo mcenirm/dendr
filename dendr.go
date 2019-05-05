@@ -251,15 +251,15 @@ const (
 
 func main() {
 	var (
-		flagpath     string
-		flagpastname string
-		flagnextname string
-		flagquiet    bool
+		flagpath  string
+		flagpast  string
+		flagnext  string
+		flagquiet bool
 	)
 	flag.StringVar(&flagpath, "path", ".", "path to scan")
-	flag.StringVar(&flagpastname, "pastname", stdinName, "past inventory file name")
-	flag.StringVar(&flagnextname, "nextname", stdoutName, "next inventory file name")
+	flag.StringVar(&flagpast, "pastfile", stdinName, "past inventory file name")
+	flag.StringVar(&flagnext, "nextfile", stdoutName, "next inventory file name")
 	flag.BoolVar(&flagquiet, "quiet", false, "suppress output")
 	flag.Parse()
-	realmain(flagpath, flagpastname, flagnextname, flagquiet)
+	realmain(flagpath, flagpast, flagnext, flagquiet)
 }

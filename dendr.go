@@ -106,8 +106,6 @@ func openNextInventoryWriter(nextName string) *inventoryWriter {
 }
 
 func realmain(start string, pastName string, nextName string, quiet bool, verbose bool) {
-	var err error
-
 	pastInventoryReader := openPastInventoryReader(pastName)
 	defer pastInventoryReader.Close()
 
@@ -125,6 +123,12 @@ func realmain(start string, pastName string, nextName string, quiet bool, verbos
 			fmt.Println(e)
 		}
 	}
+
+	walkAndReport(start, pastInventoryReader, nextInventoryWriter, quiet)
+}
+
+func walkAndReport(start string, pastInventoryReader *inventoryReader, nextInventoryWriter *inventoryWriter, quiet bool) {
+	var err error
 
 	past := pastInventoryReader.readEntry()
 	err = filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
